@@ -41,12 +41,12 @@ const menu = (
   </Menu>
 );
 
-ReactDOM.render(
+export default () => (
   <Space wrap>
     <Dropdown.Button onClick={handleButtonClick} overlay={menu}>
       Dropdown
     </Dropdown.Button>
-    <Dropdown.Button overlay={menu} placement="bottomCenter" icon={<UserOutlined />}>
+    <Dropdown.Button overlay={menu} placement="bottom" icon={<UserOutlined />}>
       Dropdown
     </Dropdown.Button>
     <Dropdown.Button onClick={handleButtonClick} overlay={menu} disabled>
@@ -68,7 +68,6 @@ ReactDOM.render(
         Button <DownOutlined />
       </Button>
     </Dropdown>
-  </Space>,
-  mountNode,
+  </Space>
 );
 ```

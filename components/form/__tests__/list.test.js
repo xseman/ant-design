@@ -1,6 +1,8 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { act } from 'react-dom/test-utils';
+import { render, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import Form from '..';
 import Input from '../../input';
 import Button from '../../button';
@@ -62,9 +64,11 @@ describe('Form.List', () => {
       expect(wrapper.find(Input).length).toBe(3);
 
       await change(wrapper, 2, '');
-      act(() => {
-        jest.runAllTimers();
-      });
+      for (let i = 0; i < 10; i += 1) {
+        act(() => {
+          jest.runAllTimers();
+        });
+      }
       wrapper.update();
       expect(wrapper.find('.ant-form-item-explain div').length).toBe(1);
 
@@ -203,5 +207,53 @@ describe('Form.List', () => {
   it('should render empty without errors', () => {
     const wrapper = mount(<Form.ErrorList />);
     expect(wrapper.render()).toMatchSnapshot();
+  });
+
+  it('no warning when reset in validate', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const Demo = () => {
+      const [form] = Form.useForm();
+
+      React.useEffect(() => {
+        form.setFieldsValue({
+          list: [1],
+        });
+      }, []);
+
+      return (
+        <Form form={form}>
+          <Form.List name="list">
+            {fields =>
+              fields.map(field => (
+                <Form.Item key={field.key} {...field}>
+                  <Input />
+                </Form.Item>
+              ))
+            }
+          </Form.List>
+          <button
+            id="validate"
+            type="button"
+            onClick={() => {
+              form.validateFields().then(() => {
+                form.resetFields();
+              });
+            }}
+          >
+            Validate
+          </button>
+        </Form>
+      );
+    };
+
+    const { container } = render(<Demo />);
+    fireEvent.click(container.querySelector('button'));
+
+    await sleep();
+
+    expect(errorSpy).not.toHaveBeenCalled();
+
+    errorSpy.mockRestore();
   });
 });

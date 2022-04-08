@@ -1,5 +1,5 @@
 ---
-order: 5
+order: 6
 title:
   zh-CN: 切换菜单类型
   en-US: Switch the menu type
@@ -81,5 +81,5 @@ const Demo = () => {
   );
 };
 
-ReactDOM.render(<Demo />, mountNode);
+export default () => <Demo />;
 ```

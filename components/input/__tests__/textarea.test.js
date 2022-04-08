@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { mount } from 'enzyme';
+import { render } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import RcTextArea from 'rc-textarea';
 import Input from '..';
 import focusTest from '../../../tests/shared/focusTest';
@@ -35,18 +37,32 @@ describe('TextArea', () => {
 
     const ref = React.createRef();
 
-    const wrapper = mount(
-      <TextArea value="" readOnly autoSize={{ minRows: 2, maxRows: 6 }} wrap="off" ref={ref} />,
+    const genTextArea = (props = {}) => (
+      <TextArea
+        value=""
+        readOnly
+        autoSize={{ minRows: 2, maxRows: 6 }}
+        wrap="off"
+        ref={ref}
+        {...props}
+      />
     );
+
+    const { container, rerender } = render(genTextArea());
+
     const mockFunc = jest.spyOn(ref.current.resizableTextArea, 'resizeTextarea');
-    wrapper.setProps({ value: '1111\n2222\n3333' });
+
+    rerender(genTextArea({ value: '1111\n2222\n3333' }));
+    // wrapper.setProps({ value: '1111\n2222\n3333' });
     await sleep(0);
     expect(mockFunc).toHaveBeenCalledTimes(1);
-    wrapper.setProps({ value: '1111' });
+
+    rerender(genTextArea({ value: '1111' }));
+    // wrapper.setProps({ value: '1111' });
     await sleep(0);
     expect(mockFunc).toHaveBeenCalledTimes(2);
-    wrapper.update();
-    expect(wrapper.find('textarea').props().style.overflow).toBeFalsy();
+
+    expect(container.querySelector('textarea').style.overflow).toBeFalsy();
 
     expect(errorSpy).not.toHaveBeenCalled();
     errorSpy.mockRestore();
@@ -485,5 +501,35 @@ describe('TextArea allowClear', () => {
     expect(wrapper.find('textarea').getDOMNode().value).toEqual('');
 
     wrapper.unmount();
+  });
+
+  // https://github.com/ant-design/ant-design/issues/31200
+  it('should not lost focus when clear input', () => {
+    const onBlur = jest.fn();
+    const wrapper = mount(<TextArea allowClear defaultValue="value" onBlur={onBlur} />, {
+      attachTo: document.body,
+    });
+    wrapper.find('textarea').getDOMNode().focus();
+    wrapper.find('.ant-input-clear-icon').at(0).simulate('mouseDown');
+    wrapper.find('.ant-input-clear-icon').at(0).simulate('click');
+    wrapper.find('.ant-input-clear-icon').at(0).simulate('mouseUp');
+    wrapper.find('.ant-input-clear-icon').at(0).simulate('focus');
+    wrapper.find('.ant-input-clear-icon').at(0).getDOMNode().click();
+    expect(onBlur).not.toBeCalled();
+    wrapper.unmount();
+  });
+
+  it('should focus text area after clear', () => {
+    const wrapper = mount(<TextArea allowClear defaultValue="111" />, { attachTo: document.body });
+    wrapper.find('.ant-input-clear-icon').at(0).simulate('click');
+    expect(document.activeElement).toBe(wrapper.find('textarea').at(0).getDOMNode());
+    wrapper.unmount();
+  });
+
+  it('should display boolean value as string', () => {
+    const wrapper = mount(<TextArea value />);
+    expect(wrapper.find('textarea').first().getDOMNode().value).toBe('true');
+    wrapper.setProps({ value: false });
+    expect(wrapper.find('textarea').first().getDOMNode().value).toBe('false');
   });
 });
